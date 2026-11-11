@@ -45,3 +45,45 @@ def volatility_signal(path: Path = DATA / "cache" / "dexrnsa.csv", window: int =
         "vol_desmoothed": float(r_true.std() * np.sqrt(12)),
     }
     return vol, info
+
+
+# --- pool utilization -------------------------------------------------------------------------------------------
+
+CRUNCH_START = "2026-01-01"   # first month of the documented USDC crunch (CoinPaprika; DefiLlama data)
+
+
+def utilization_daily(path: Path = DATA / "raw" / "rmm_liquidity_daily.csv") -> pd.Series:
+    """Daily stablecoin utilization of the RMM pool: borrowed / (borrowed + idle), from DefiLlama."""
+    df = pd.read_csv(path, parse_dates=["date"], index_col="date")
+    return df["utilization"].clip(0, 1).sort_index()
+
+
+def utilization_signal(path: Path = DATA / "raw" / "rmm_liquidity_daily.csv") -> pd.Series:
+    """Monthly mean utilization (the controller runs monthly)."""
+    return utilization_daily(path).resample("MS").mean().rename("utilization")
+
+
+# --- rent coverage (stylized) -----------------------------------------------------------------------------------
+
+# Documented sequence (Outlier Media, BridgeDetroit, Lofty): rent escrow from Jul 2025, distributions largely
+# halted by the end of 2025, formal suspension in Feb 2026. No public time series exists, so the path between
+# those dates is a stylized assumption: full coverage until Jun 2025, linear fall to 20% in Dec 2025, 10% in
+# Jan 2026, zero from Feb 2026.
+RENT_PATH = {
+    "2025-06-01": 1.0,
+    "2025-12-01": 0.2,
+    "2026-01-01": 0.1,
+    "2026-02-01": 0.0,
+}
+
+
+def rent_coverage_stylized(start: str = "2024-02-01", end: str = "2026-11-01") -> pd.Series:
+    """Monthly share of expected rent actually paid, stylized from the documented RealT dates."""
+    idx = pd.date_range(start, end, freq="MS")
+    anchors = pd.Series(RENT_PATH, dtype=float)
+    anchors.index = pd.to_datetime(anchors.index)
+    s = pd.Series(np.nan, index=idx)
+    s.loc[s.index <= anchors.index[0]] = 1.0
+    s.loc[s.index >= anchors.index[-1]] = 0.0
+    s.update(anchors)
+    return s.interpolate("time").clip(0, 1).rename("rent_coverage")
