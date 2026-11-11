@@ -1,0 +1,8 @@
+pandas
+requests
+web3
+jupyter
+matplotlib
+scipy
+networkx
+scikit-fuzzy

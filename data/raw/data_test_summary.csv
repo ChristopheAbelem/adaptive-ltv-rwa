@@ -1,0 +1,9 @@
+,status,note
+case_shiller,PASS,"1991-01..2026-07, missing=0"
+pool_liquidity,PASS,"2024-02-28..2026-11-10, 988 days"
+risk_params,PASS,latest block read; check collateral rows above
+risk_params_vs_llamarisk,PASS,on-chain RTW params match LlamaRisk June 2025
+liquidations,PASS,"2079 events, last 2026-10-29 21:06:45"
+realt_tokens,FAIL,"ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\'api.realt.community\', port=443): Max retries exceeded with url: /v1/token (Caused by NameResolutionError(""HTTPSConnection(host=\'api.realt.community\', port=443): Failed to resolve \'api.realt.community\' ([Errno 8] nodename nor servname provided, or not known)""))'))"
+realt_history,FAIL,"ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\'api.realt.community\', port=443): Max retries exceeded with url: /v1/tokenHistory (Caused by NameResolutionError(""HTTPSConnection(host=\'api.realt.community\', port=443): Failed to resolve \'api.realt.community\' ([Errno 8] nodename nor servname provided, or not known)""))'))"
+rent_tracker,PARTIAL,site HTTP 200; raw files need a manual request
