@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "adaptive-ltv"
+version = "0.1.0"
+description = "Fuzzy closed-loop controller for the max LTV of a tokenized real estate lending market"
+requires-python = ">=3.11"
+dependencies = ["numpy", "pandas", "scipy", "networkx", "scikit-fuzzy", "matplotlib"]
+
+[project.optional-dependencies]
+dev = ["pytest", "jupyter", "requests", "web3"]
+
+[tool.setuptools]
+packages = ["adaptive_ltv"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

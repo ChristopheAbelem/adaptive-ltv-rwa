@@ -12,3 +12,7 @@ data/processed/
 
 # Portuguese delivery version for the course, not part of the public repo
 *_pt.ipynb
+
+# build artifacts
+*.egg-info/
+.pytest_cache/
