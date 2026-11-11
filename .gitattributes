@@ -1,0 +1,2 @@
+# Notebooks are reports (outputs and images inflate their size): keep them out of the language stats
+*.ipynb linguist-documentation
