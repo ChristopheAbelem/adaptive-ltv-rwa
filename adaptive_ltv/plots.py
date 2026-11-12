@@ -43,3 +43,25 @@ def plot_memberships(var, title, xlabel, band=None, band_label=None, label_x=Non
     ax.set_ylabel("membership degree")
     ax.set_title(title, loc="left")
     return fig, ax
+
+
+def plot_control_surface(xs, ys, z, xlabel, ylabel, title, fixed_text, ax=None):
+    """3D control surface (max LTV over two inputs), single-hue sequential colour for magnitude."""
+    import numpy as np
+    from matplotlib import cm
+
+    if ax is None:
+        fig = plt.figure(figsize=(7, 5.2))
+        ax = fig.add_subplot(projection="3d")
+    X, Y = np.meshgrid(xs, ys)
+    ax.plot_surface(X, Y, z, cmap=cm.Blues, vmin=0.2, vmax=0.62, edgecolor="#ffffff", linewidth=0.2,
+                    antialiased=True)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        pct_axis(axis)
+    ax.set_xlabel(xlabel, labelpad=8)
+    ax.set_ylabel(ylabel, labelpad=8)
+    ax.set_zlabel("max LTV", labelpad=8)
+    ax.set_zlim(0.28, 0.62)
+    ax.set_title(f"{title}\n{fixed_text}", loc="left", fontsize=11)
+    ax.view_init(elev=25, azim=-55)
+    return ax

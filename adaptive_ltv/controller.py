@@ -10,11 +10,12 @@ from .membership import LTV_MAX, LTV_MIN, FuzzyVariable
 
 # Each input term gets a severity: how much it worsens the lending risk.
 # Medium volatility is the normal market (it contains the median), so it scores less than a tight pool or partial
-# rent; a crunch or low rent alone is enough to cut the LTV to its minimum when the market is normal.
+# rent. A crunch or low rent scores 4: enough on its own to cut the LTV to its minimum, whatever the volatility
+# (a calm price does not offset an empty pool or an asset that stopped paying).
 SEVERITY = {
     "volatility": {"low": 0, "medium": 1, "high": 2},
-    "utilization": {"healthy": 0, "tight": 2, "crunch": 3},
-    "rent_coverage": {"full": 0, "partial": 2, "low": 3},
+    "utilization": {"healthy": 0, "tight": 2, "crunch": 4},
+    "rent_coverage": {"full": 0, "partial": 2, "low": 4},
 }
 
 

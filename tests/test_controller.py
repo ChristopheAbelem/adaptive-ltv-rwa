@@ -61,3 +61,10 @@ def test_decision_exposes_internals(ctrl):
     assert len(d.activations) == 27
     assert any(s > 0 for _, s in d.activations)
     assert d.aggregated.shape == ctrl.ltv.universe.shape
+
+
+@pytest.mark.parametrize("vol", [0.01, 0.07, 0.25])
+def test_crunch_or_failed_rent_alone_cut_to_minimum(ctrl, vol):
+    """A calm price never offsets an empty pool or an asset that stopped paying."""
+    assert ctrl(vol, 1.0, 1.0) == pytest.approx(LTV_MIN, abs=1e-3)
+    assert ctrl(vol, 0.85, 0.0) == pytest.approx(LTV_MIN, abs=1e-3)
