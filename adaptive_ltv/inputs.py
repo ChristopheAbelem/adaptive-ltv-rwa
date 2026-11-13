@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-DATA = Path("data")
+DATA = Path(__file__).resolve().parents[1] / "data"   # repo-root data folder, whatever the working directory
 
 
 def load_case_shiller(path: Path = DATA / "cache" / "dexrnsa.csv") -> pd.Series:

@@ -23,7 +23,6 @@ ASSUMPTIONS = {
     "target_share": ((0.5, 1.0), "each borrower borrows a fixed share of the allowed amount, drawn uniformly"),
     "deleverage_rate": (0.10, "share of the excess over the new limit repaid each month when the limit falls (sensitivity: 0 to 20%)"),
     "initial_utilization": (0.85, "pool utilization at the start (2024-2025 level, DefiLlama)"),
-    "interest_paid_from_rent": (True, "borrowers pay interest from rent; with rent coverage R, a share 1 - R of it is added to the debt"),
     "rate_kink": ((0.90, 0.05, 0.60), "interest model (Aave-style stablecoin curve): kink at 90% utilization, 5% a year at the kink, 65% at 100%"),
     "lender_flows": ((0.01, 0.10, 0.17), "calibrated on DefiLlama 2024-2026: deposits and withdrawals balance (1% a month each) "
                      "while rent is paid, so utilization stays near 85%; once rent coverage falls to 10% or less, lenders run: "
@@ -50,7 +49,6 @@ class State:
     bad_debt: float = 0.0         # bad debt realized this month
     market_price: float = 1.0     # price a token actually sells for this month (token value minus selling pressure)
     price_returns: list = field(default_factory=list)   # monthly log returns of the market price (last 12 used)
-    history: list = field(default_factory=list)
 
     @property
     def total_debt(self) -> float:
@@ -114,7 +112,7 @@ def rolling_vol(returns: list, window: int = 12) -> float:
 
 def update_market(state: State, max_ltv: float, scenario: Scenario) -> State:
     """One month: borrowers react to the limit, interest accrues, lenders move, prices move, liquidations."""
-    s = replace(state, debt=state.debt.copy(), collateral=state.collateral.copy(), history=state.history)
+    s = replace(state, debt=state.debt.copy(), collateral=state.collateral.copy())
     t = s.month + 1
     open_ = s.collateral > 0
 
@@ -127,7 +125,8 @@ def update_market(state: State, max_ltv: float, scenario: Scenario) -> State:
     if want.sum() > 0:
         s.debt += want * min(1.0, s.idle_cash / want.sum())                    # limited by idle cash
 
-    # 2. interest: borrowers pay it out of the rent their tokens earn; the unpaid part is added to the debt
+    # 2. interest: borrowers pay it out of the rent their tokens earn; with rent coverage R, the share 1 - R that
+    #    rent cannot pay is added to the debt (a modelling rule, not a tunable assumption)
     rate = borrow_rate(s.utilization, *ASSUMPTIONS["rate_kink"][0]) / 12
     s.debt *= 1 + rate * (1 - s.rent_coverage)
 
@@ -209,9 +208,13 @@ def loss_summary(result: pd.DataFrame, initial_supply: float | None = None) -> d
 
 
 class assumption:
-    """Temporarily change one assumption (sensitivity analysis): `with assumption("deleverage_rate", 0.0): ...`."""
+    """Temporarily change one assumption (sensitivity analysis): `with assumption("deleverage_rate", 0.0): ...`.
+
+    ASSUMPTIONS is module-level state: runs inside the block use the new value, and it is restored on exit."""
 
     def __init__(self, key: str, value):
+        if key not in ASSUMPTIONS:
+            raise KeyError(f"unknown assumption {key!r}; known: {sorted(ASSUMPTIONS)}")
         self.key, self.value = key, value
 
     def __enter__(self):

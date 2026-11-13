@@ -6,7 +6,9 @@ import skfuzzy as fuzz
 from adaptive_ltv.inputs import rent_coverage_stylized, utilization_daily, utilization_signal
 from adaptive_ltv.membership import LTV_MAX, LTV_MIN, max_ltv_variable, rent_variable, utilization_variable
 
-LIQ = "data/raw/rmm_liquidity_daily.csv"
+from adaptive_ltv.inputs import DATA
+
+LIQ = DATA / "raw" / "rmm_liquidity_daily.csv"
 
 
 @pytest.fixture(scope="module")

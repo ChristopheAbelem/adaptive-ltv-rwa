@@ -1,6 +1,8 @@
 """Shared chart helpers (matplotlib)."""
 
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib import cm
 
 TERM_COLORS = ["#2a78d6", "#eb6834", "#1baf7a"]   # term order 1 / 2 / 3 (validated categorical slots 1-3)
 LINE = "#2a6fdb"
@@ -47,9 +49,6 @@ def plot_memberships(var, title, xlabel, band=None, band_label=None, label_x=Non
 
 def plot_control_surface(xs, ys, z, xlabel, ylabel, title, fixed_text, ax=None):
     """3D control surface (max LTV over two inputs), single-hue sequential colour for magnitude."""
-    import numpy as np
-    from matplotlib import cm
-
     if ax is None:
         fig = plt.figure(figsize=(7, 5.2))
         ax = fig.add_subplot(projection="3d")

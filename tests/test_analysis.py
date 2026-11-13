@@ -2,14 +2,7 @@ import numpy as np
 import pytest
 
 from adaptive_ltv.analysis import REFERENCE, static_cases, surface
-from adaptive_ltv.controller import FuzzyLTVController
-from adaptive_ltv.membership import LTV_MAX, LTV_MIN, max_ltv_variable, rent_variable
-from test_controller import UTIL, VOL
-
-
-@pytest.fixture(scope="module")
-def ctrl():
-    return FuzzyLTVController(VOL, UTIL, rent_variable(), max_ltv_variable())
+from adaptive_ltv.membership import LTV_MAX, LTV_MIN
 
 
 def test_static_cases_report(ctrl):

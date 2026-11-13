@@ -5,7 +5,9 @@ import pytest
 from adaptive_ltv.inputs import desmooth, rolling_volatility, volatility_signal
 from adaptive_ltv.membership import volatility_variable
 
-CS = "data/cache/dexrnsa.csv"
+from adaptive_ltv.inputs import DATA
+
+CS = DATA / "cache" / "dexrnsa.csv"
 
 
 def test_desmooth_recovers_known_series():

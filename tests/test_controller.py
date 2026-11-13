@@ -3,19 +3,8 @@ from itertools import product
 import numpy as np
 import pytest
 
-from adaptive_ltv.controller import FuzzyLTVController, build_rules
-from adaptive_ltv.membership import LTV_MAX, LTV_MIN, FuzzyVariable, max_ltv_variable, rent_variable
-
-# synthetic volatility and utilization variables with the same shapes as the real ones (no data files needed)
-VOL = FuzzyVariable("volatility", np.round(np.arange(0, 0.3001, 0.001), 3),
-                    {"low": [0, 0, 0.042, 0.055], "medium": [0.042, 0.055, 0.091, 0.166], "high": [0.091, 0.166, 0.3, 0.3]})
-UTIL = FuzzyVariable("utilization", np.round(np.arange(0, 1.0001, 0.001), 3),
-                     {"healthy": [0, 0, 0.858, 0.90], "tight": [0.858, 0.90, 0.95, 0.99], "crunch": [0.95, 0.99, 1, 1]})
-
-
-@pytest.fixture(scope="module")
-def ctrl():
-    return FuzzyLTVController(VOL, UTIL, rent_variable(), max_ltv_variable())
+from adaptive_ltv.controller import build_rules
+from adaptive_ltv.membership import LTV_MAX, LTV_MIN
 
 
 def test_rule_base_is_complete():

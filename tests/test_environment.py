@@ -77,3 +77,9 @@ def test_lender_run_only_when_rent_stops():
     run = E.run(flat_scenario(n=12, rent=0.05), E.fixed_policy())
     assert calm["supply"].iloc[-1] >= calm["supply"].iloc[0] - 1e-9
     assert run["utilization"].iloc[-1] > 0.95
+
+
+def test_unknown_assumption_is_rejected():
+    with pytest.raises(KeyError):
+        with E.assumption("no_such_thing", 1):
+            pass
