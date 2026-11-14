@@ -1,1 +1,2 @@
--e .[dev]
+# Used by Streamlit Community Cloud to run app.py. For development: pip install -e ".[dev]"
+.[app]

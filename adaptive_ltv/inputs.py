@@ -8,10 +8,31 @@ import pandas as pd
 DATA = Path(__file__).resolve().parents[1] / "data"   # repo-root data folder, whatever the working directory
 
 
-def load_case_shiller(path: Path = DATA / "cache" / "dexrnsa.csv") -> pd.Series:
-    """Monthly S&P Cotality Case-Shiller MI-Detroit index (FRED DEXRNSA, not seasonally adjusted)."""
+FRED_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXRNSA"
+CS_END = "2026-07-01"   # last month used in the report: later FRED releases are cut here so results do not move
+
+
+def download_case_shiller(path: Path = DATA / "cache" / "dexrnsa.csv") -> Path:
+    """Download the licensed series from FRED into the local cache (git-ignored, never redistributed)."""
+    raw = pd.read_csv(FRED_URL)
+    raw.columns = ["date", "dexrnsa"]
+    raw["dexrnsa"] = pd.to_numeric(raw["dexrnsa"], errors="coerce")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw.dropna().to_csv(path, index=False)
+    return path
+
+
+def load_case_shiller(path: Path = DATA / "cache" / "dexrnsa.csv", download: bool = True) -> pd.Series:
+    """Monthly S&P Cotality Case-Shiller MI-Detroit index (FRED DEXRNSA, not seasonally adjusted), up to CS_END.
+
+    If the local cache is missing it is downloaded from FRED first (download=False raises FileNotFoundError)."""
+    path = Path(path)
+    if not path.exists():
+        if not download:
+            raise FileNotFoundError(path)
+        download_case_shiller(path)
     cs = pd.read_csv(path, parse_dates=["date"], index_col="date")["dexrnsa"]
-    return cs.astype(float).sort_index()
+    return cs.astype(float).sort_index().loc[:CS_END]
 
 
 def seasonally_adjusted_returns(index: pd.Series) -> pd.Series:

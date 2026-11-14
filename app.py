@@ -8,6 +8,7 @@ Two tabs:
 - Try the controller: move the three inputs by hand and see each Mamdani step.
 """
 
+import threading
 import time
 
 import matplotlib
@@ -106,6 +107,12 @@ T = TEXT[lang]
 
 
 @st.cache_resource
+def run_lock():
+    """One simulation at a time per server: env.assumption changes module-level settings."""
+    return threading.Lock()
+
+
+@st.cache_resource
 def load():
     return default_controller(), {"collapse": operational_collapse(), "shock": market_shock()}
 
@@ -180,8 +187,8 @@ with tab_sim:
             last["decision"] = ctrl.decide(v, u, r)
             return last["decision"].max_ltv
 
-        # env.assumption changes module-level settings: fine for one local user, not for a shared server
-        with env.assumption("deleverage_rate", delev), env.assumption("token_discount", discount):
+        # env.assumption changes module-level settings, so concurrent visitors run one after the other
+        with run_lock(), env.assumption("deleverage_rate", delev), env.assumption("token_discount", discount):
             supply0 = env.initial_state(scenario, env.START_LTV).supply
             fixed_run = env.simulate(scenario, env.fixed_policy())
             fuzzy_run = env.simulate(scenario, fuzzy_policy)
