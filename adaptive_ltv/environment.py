@@ -164,13 +164,11 @@ def update_market(state: State, max_ltv: float, scenario: Scenario) -> State:
     return s
 
 
-def run(scenario: Scenario, policy, seed: int = 0, on_step=None) -> pd.DataFrame:
-    """Closed loop: policy(volatility, utilization, rent_coverage) -> max LTV, every month.
+def simulate(scenario: Scenario, policy, seed: int = 0):
+    """Closed loop, one month at a time: yields (state, row) after each month.
 
-    on_step(row) is called after each month (used for the real-time display)."""
+    policy(volatility, utilization, rent_coverage) -> max LTV is called every month with the current state."""
     s = initial_state(scenario, START_LTV, seed)     # both policies inherit the same book, built under RealT's 60%
-    s0_supply = s.supply
-    rows = []
     for _ in range(len(scenario) - 1):
         ltv = policy(s.volatility, s.utilization, s.rent_coverage)
         s = update_market(s, ltv, scenario)
@@ -180,13 +178,20 @@ def run(scenario: Scenario, policy, seed: int = 0, on_step=None) -> pd.DataFrame
                "oracle_price": s.oracle_price, "token_value": s.token_value, "total_debt": s.total_debt,
                "supply": s.supply, "liquidations": s.liquidations, "bad_debt": s.bad_debt,
                "latent_bad_debt": s.latent_bad_debt()}
+        yield s, row
+
+
+def run(scenario: Scenario, policy, seed: int = 0, on_step=None) -> pd.DataFrame:
+    """Closed loop over the whole scenario; on_step(row) is called after each month (real-time display)."""
+    rows = []
+    for _, row in simulate(scenario, policy, seed):
         rows.append(row)
         if on_step:
             on_step(row)
     out = pd.DataFrame(rows).set_index("date")
     out["cum_bad_debt"] = out["bad_debt"].cumsum()
     out["loss_to_date"] = out["cum_bad_debt"] + out["latent_bad_debt"]
-    out.attrs["initial_supply"] = s0_supply
+    out.attrs["initial_supply"] = initial_state(scenario, START_LTV, seed).supply
     return out
 
 

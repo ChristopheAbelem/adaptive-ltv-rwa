@@ -10,7 +10,8 @@ requires-python = ">=3.11"
 dependencies = ["numpy", "pandas", "scipy", "networkx", "scikit-fuzzy", "matplotlib"]
 
 [project.optional-dependencies]
-dev = ["pytest", "jupyter", "requests", "web3"]
+dev = ["pytest", "jupyter", "requests", "web3", "streamlit"]
+app = ["streamlit"]
 
 [tool.setuptools]
 packages = ["adaptive_ltv"]

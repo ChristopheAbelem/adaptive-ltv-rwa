@@ -83,3 +83,12 @@ def test_unknown_assumption_is_rejected():
     with pytest.raises(KeyError):
         with E.assumption("no_such_thing", 1):
             pass
+
+
+def test_step_by_step_matches_full_run():
+    """The real-time display (simulate) and the report (run) give the same months."""
+    sc = flat_scenario(rent=0.5)
+    rows = [row for _, row in E.simulate(sc, E.fixed_policy(0.45), seed=2)]
+    res = E.run(sc, E.fixed_policy(0.45), seed=2)
+    assert len(rows) == len(sc) - 1 == len(res)
+    assert rows[-1]["total_debt"] == pytest.approx(res["total_debt"].iloc[-1])

@@ -8,8 +8,6 @@ operational collapse (RealT 2024-2026: rent and pool liquidity fail while house 
 provided borrowers repay part of their loans when the limit falls; with no repayment it changes nothing. In the
 market shock losses are small under both rules and the comparison is not robust to the assumptions.
 
-> Status: course deliverable in progress (real-time app and conclusions pending).
-
 ## Structure
 
 | Path | Content |
@@ -21,7 +19,10 @@ market shock losses are small under both rules and the comparison is not robust 
 | `adaptive_ltv/environment.py` | Monthly lending-pool environment, `update_market(state, max_ltv)`, closed-loop `run` |
 | `adaptive_ltv/scenarios.py` | Market shock, operational collapse, Merton random futures |
 | `adaptive_ltv/merton.py` | Merton jump-diffusion: calibration, simulation, closed forms |
-| `adaptive_ltv/plots.py` | Chart helpers |
+| `adaptive_ltv/plots.py` | Chart helpers, including the four inference steps of one decision |
+| `adaptive_ltv/live.py` | Real-time display inside the notebook |
+| `adaptive_ltv/__main__.py` | Command line: `python -m adaptive_ltv collapse` prints each month as it runs |
+| `app.py` | Streamlit app: closed loop in real time and the controller's internal steps |
 | `tests/` | `pytest` suite (de-smoothing, coverage, rules, environment accounting, Merton closed forms) |
 | `00_data_test.ipynb` | Downloads and freezes every input; pass/fail per source |
 | `01_adaptive_ltv.ipynb` | Report: modelling, rules, surfaces, environment, closed-loop results, sensitivity |
@@ -44,3 +45,9 @@ pytest
 ```
 
 Then run `00_data_test.ipynb` once and `01_adaptive_ltv.ipynb` top to bottom.
+
+Real-time simulation in the browser:
+
+```bash
+streamlit run app.py
+```

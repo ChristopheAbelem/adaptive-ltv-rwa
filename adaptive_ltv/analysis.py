@@ -5,6 +5,17 @@ import pandas as pd
 
 from .controller import FuzzyLTVController
 
+
+def default_controller() -> FuzzyLTVController:
+    """The controller used in the report: volatility and utilization terms built from the frozen data."""
+    from .inputs import utilization_daily, volatility_signal
+    from .membership import max_ltv_variable, rent_variable, utilization_variable, volatility_variable
+
+    vol, _ = volatility_signal()
+    return FuzzyLTVController(volatility_variable(vol), utilization_variable(utilization_daily()),
+                              rent_variable(), max_ltv_variable())
+
+
 INPUTS = ("volatility", "utilization", "rent_coverage")
 
 # Reference values for the input held fixed in a surface: a normal month (median volatility, healthy pool, full rent).
@@ -38,3 +49,10 @@ def surface(ctrl: FuzzyLTVController, x_name: str, y_name: str, n: int = 41,
             z[i, j] = ctrl(point["volatility"], point["utilization"], point["rent_coverage"])
     third = next(k for k in INPUTS if k not in (x_name, y_name))
     return xs, ys, z, (third, fixed[third])
+
+
+def active_rules(decision) -> pd.DataFrame:
+    """The rules that fired for one decision, strongest first (firing strength = min of the three degrees)."""
+    rows = [{"volatility": r[0], "utilization": r[1], "rent_coverage": r[2], "max_ltv_term": r[3], "strength": s}
+            for r, s in decision.activations if s > 0]
+    return pd.DataFrame(rows).sort_values("strength", ascending=False, kind="stable").reset_index(drop=True)
