@@ -66,25 +66,50 @@ def plot_control_surface(xs, ys, z, xlabel, ylabel, title, fixed_text, ax=None):
     return ax
 
 
-INPUT_LABELS = {"volatility": "1. volatility", "utilization": "2. utilization", "rent_coverage": "3. rent coverage"}
+DECISION_LABELS = {
+    "en": {"titles": {"volatility": "1. volatility", "utilization": "2. utilization",
+                      "rent_coverage": "3. rent coverage", "output": "4. aggregated output -> max LTV"},
+           "terms": {}, "centroid": "centroid", "cut": "cut"},
+    "pt": {"titles": {"volatility": "1. volatilidade", "utilization": "2. utilização",
+                      "rent_coverage": "3. cobertura de aluguel", "output": "4. saída agregada -> LTV máximo"},
+           "terms": {"volatility": {"low": "baixa", "medium": "média", "high": "alta"},
+                     "utilization": {"healthy": "saudável", "tight": "apertada", "crunch": "crise"},
+                     "rent_coverage": {"low": "baixa", "partial": "parcial", "full": "cheia"},
+                     "max_ltv": {"low": "baixo", "medium": "médio", "high": "alto"}},
+           "centroid": "centroide", "cut": "corte"},
+}
 
 
-def plot_decision(ctrl, decision, fig=None):
-    """The four Mamdani steps for one month: fuzzified inputs (crisp value and degrees) and the aggregated output
-    with its centroid."""
+def term_label(variable: str, term: str, lang: str = "en") -> str:
+    return DECISION_LABELS[lang]["terms"].get(variable, {}).get(term, term)
+
+
+def output_cuts(decision) -> dict[str, float]:
+    """Height at which each output term is cut: the strongest rule that concludes it (0 if none fires)."""
+    cuts = {}
+    for (_, _, _, out), s in decision.activations:
+        cuts[out] = max(cuts.get(out, 0.0), s)
+    return cuts
+
+
+def plot_decision(ctrl, decision, fig=None, lang: str = "en"):
+    """The four Mamdani steps for one month: fuzzified inputs (crisp value and degrees), the cut of each output term,
+    the aggregated output and its centroid."""
+    L = DECISION_LABELS[lang]
     if fig is None:
-        fig = plt.figure(figsize=(14, 3.4))
+        fig = plt.figure(figsize=(14, 3.6))
     fig.clear()
     axes = fig.subplots(1, 4)
     for ax, (name, var) in zip(axes[:3], ctrl.vars.items()):
         x = decision.inputs[name]
         for (term, mf), color in zip(var.mf.items(), TERM_COLORS):
-            ax.plot(var.universe, mf, color=color, lw=1.8, label=term)
+            label = term_label(name, term, lang)
+            ax.plot(var.universe, mf, color=color, lw=1.8, label=label)
             mu = decision.memberships[name][term]
             if mu > 0:
                 ax.plot([x], [mu], "o", color=color, ms=7, mec="#ffffff", mew=1.5)
                 right = x > (var.universe[0] + var.universe[-1]) / 2 if name != "utilization" else x > 0.85
-                ax.text(x, mu + 0.06, f"{term} {mu:.2f} ", color="#333333", fontsize=8,
+                ax.text(x, mu + 0.06, f"{label} {mu:.2f} ", color="#333333", fontsize=8,
                         ha="right" if right else "left")
         ax.axvline(x, color="#333333", lw=1, ls=":")
         pct_axis(ax.xaxis)
@@ -94,17 +119,23 @@ def plot_decision(ctrl, decision, fig=None):
             ax.set_xlim(0.70, 1.0)
         ax.set_ylim(0, 1.15)
         ax.legend(fontsize=7, frameon=False, loc="upper center", ncol=3, bbox_to_anchor=(0.5, -0.12))
-        ax.set_title(f"{INPUT_LABELS[name]}: {x:.1%}", loc="left", fontsize=10)
+        ax.set_title(f"{L['titles'][name]}: {x:.1%}", loc="left", fontsize=10)
     ax = axes[3]
+    cuts = output_cuts(decision)
     for (term, mf), color in zip(ctrl.ltv.mf.items(), TERM_COLORS):
-        ax.plot(ctrl.ltv.universe, mf, color=color, lw=1, alpha=0.35)
+        label = term_label("max_ltv", term, lang)
+        ax.plot(ctrl.ltv.universe, mf, color=color, lw=1, alpha=0.45, label=f"{label}: {L['cut']} {cuts.get(term, 0):.2f}")
+        if cuts.get(term, 0) > 0:
+            span = ctrl.ltv.universe[mf > 0]
+            ax.hlines(cuts[term], span.min(), span.max(), color=color, lw=1, ls="--")
     ax.fill_between(ctrl.ltv.universe, decision.aggregated, color=LINE, alpha=0.35, lw=0)
     ax.plot(ctrl.ltv.universe, decision.aggregated, color=LINE, lw=1.8)
     ax.axvline(decision.max_ltv, color="#333333", lw=1.5)
-    ax.text(decision.max_ltv, 1.06, f"centroid {decision.max_ltv:.1%}", fontsize=9, ha="center")
+    ax.text(decision.max_ltv, 1.06, f"{L['centroid']} {decision.max_ltv:.1%}", fontsize=9, ha="center")
     pct_axis(ax.xaxis)
     ax.set_ylim(0, 1.15)
-    ax.set_title("4. aggregated output -> max LTV", loc="left", fontsize=10)
+    ax.legend(fontsize=7, frameon=False, loc="upper center", ncol=3, bbox_to_anchor=(0.5, -0.12))
+    ax.set_title(L["titles"]["output"], loc="left", fontsize=10)
     for a in axes:
         a.tick_params(labelsize=8)
     fig.tight_layout()

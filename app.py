@@ -20,7 +20,7 @@ import streamlit as st
 
 from adaptive_ltv import environment as env
 from adaptive_ltv.analysis import active_rules, default_controller
-from adaptive_ltv.plots import STYLE, plot_decision
+from adaptive_ltv.plots import STYLE, output_cuts, plot_decision, term_label
 from adaptive_ltv.scenarios import market_shock, operational_collapse
 
 plt.rcParams.update(STYLE)
@@ -50,6 +50,11 @@ TEXT = {
                         "at its strength, the cuts are joined (max), and the centre of gravity of the shape "
                         "(centroid) is the new limit."),
         "rules": "Rules fired (strength = smallest of the three degrees)",
+        "cuts": "Cut of each output term (strongest rule that concludes it)",
+        "centroid_help": "Centroid: the max LTV is the centre of gravity of the aggregated shape, x running over the LTV axis:",
+        "rule_cols": {"volatility": "volatility", "utilization": "utilization", "rent_coverage": "rent coverage",
+                      "max_ltv_term": "then max LTV", "strength": "strength"},
+        "series": {"fixed": "fixed 60%", "fuzzy": "fuzzy", "vol": "volatility", "rent": "rent coverage"},
         "done": "Simulation finished.",
         "vol": "Volatility (annual)", "util": "Utilization", "rent": "Rent coverage",
         "try_intro": "Move the inputs: the four steps of the controller are recomputed at once.",
@@ -81,6 +86,11 @@ TEXT = {
                         "saída na sua força, os cortes são unidos (máximo) e o centro de gravidade da forma "
                         "(centroide) é o novo limite."),
         "rules": "Regras ativadas (força = menor dos três graus)",
+        "cuts": "Corte de cada termo de saída (a regra mais forte que conclui nele)",
+        "centroid_help": "Centroide: o LTV máximo é o centro de gravidade da forma agregada, com x percorrendo o eixo do LTV:",
+        "rule_cols": {"volatility": "volatilidade", "utilization": "utilização", "rent_coverage": "aluguel",
+                      "max_ltv_term": "então LTV máximo", "strength": "força"},
+        "series": {"fixed": "fixo 60%", "fuzzy": "fuzzy", "vol": "volatilidade", "rent": "cobertura de aluguel"},
         "done": "Simulação concluída.",
         "vol": "Volatilidade (anual)", "util": "Utilização", "rent": "Cobertura de aluguel",
         "try_intro": "Mova as entradas: as quatro etapas do controlador são recalculadas na hora.",
@@ -107,13 +117,24 @@ st.markdown(T["intro"])
 tab_sim, tab_try = st.tabs([T["tab_sim"], T["tab_try"]])
 
 
-def show_decision(decision, fig_slot, table_slot):
-    fig = plot_decision(ctrl, decision)
-    fig_slot.pyplot(fig, clear_figure=True)
-    plt.close(fig)
-    rules = active_rules(decision).rename(columns={"max_ltv_term": "max LTV"})
-    rules["strength"] = rules["strength"].round(2)
-    table_slot.dataframe(rules, hide_index=True, width="stretch")
+def show_decision(decision, slot):
+    """Figure of the four Mamdani steps, the cut of each output term, the centroid formula and the fired rules."""
+    with slot.container():
+        fig = plot_decision(ctrl, decision, lang=lang)
+        st.pyplot(fig, clear_figure=True)
+        plt.close(fig)
+        cuts = output_cuts(decision)
+        st.markdown(f"**{T['cuts']}:** " + " · ".join(
+            f"{term_label('max_ltv', t, lang)} {cuts.get(t, 0):.2f}" for t in ("low", "medium", "high")))
+        st.markdown(T["centroid_help"])
+        st.latex(r"\text{LTV} = \frac{\sum_x x \, \mu(x)}{\sum_x \mu(x)} = " + f"{100 * decision.max_ltv:.1f}" + r"\%")
+        st.markdown(f"**{T['rules']}**")
+        rules = active_rules(decision)
+        for col in ("volatility", "utilization", "rent_coverage"):
+            rules[col] = rules[col].map(lambda t, c=col: term_label(c, t, lang))
+        rules["max_ltv_term"] = rules["max_ltv_term"].map(lambda t: term_label("max_ltv", t, lang))
+        rules["strength"] = rules["strength"].round(2)
+        st.dataframe(rules.rename(columns=T["rule_cols"]), hide_index=True, width="stretch")
 
 
 # --- manual controller --------------------------------------------------------------------------------------------
@@ -125,7 +146,7 @@ with tab_try:
     r = c.slider(T["rent"], 0.0, 1.0, 1.0, 0.01, format="%.2f")
     d = ctrl.decide(v, u, r)
     st.metric(T["result"], f"{d.max_ltv:.1%}")
-    show_decision(d, st.empty(), st.empty())
+    show_decision(d, st.empty())
     st.caption(T["inside_help"])
 
 
@@ -149,8 +170,7 @@ with tab_sim:
     sig_slot, loss_slot = c3.empty(), c4.empty()
     st.subheader(T["inside"])
     st.caption(T["inside_help"])
-    fig_slot = st.empty()
-    table_slot = st.empty()
+    decision_slot = st.empty()
 
     if go:
         scenario = SCENARIOS[key]
@@ -172,12 +192,14 @@ with tab_sim:
                 realized["fuzzy"] += rz["bad_debt"]
                 loss_f = 100 * (realized["fixed"] + rf["latent_bad_debt"]) / supply0
                 loss_z = 100 * (realized["fuzzy"] + rz["latent_bad_debt"]) / supply0
+                S = T["series"]
                 hist.append({"date": rz["date"],
-                             "ltv fixed": 100 * rf["max_ltv"], "ltv fuzzy": 100 * rz["max_ltv"],
-                             "util fixed": 100 * rf["utilization"], "util fuzzy": 100 * rz["utilization"],
-                             "volatility": 100 * rz["volatility"], "rent": 100 * rz["rent_coverage"],
-                             "loss fixed": loss_f, "loss fuzzy": loss_z})
+                             ("ltv", S["fixed"]): 100 * rf["max_ltv"], ("ltv", S["fuzzy"]): 100 * rz["max_ltv"],
+                             ("util", S["fixed"]): 100 * rf["utilization"], ("util", S["fuzzy"]): 100 * rz["utilization"],
+                             ("sig", S["vol"]): 100 * rz["volatility"], ("sig", S["rent"]): 100 * rz["rent_coverage"],
+                             ("loss", S["fixed"]): loss_f, ("loss", S["fuzzy"]): loss_z})
                 df = pd.DataFrame(hist).set_index("date")
+                df.columns = pd.MultiIndex.from_tuples(df.columns)      # (chart, series)
 
                 metric_slots[0].metric(T["month"], rz["date"].strftime("%Y-%m"))
                 metric_slots[1].metric(T["fuzzy_ltv"], f"{rz['max_ltv']:.1%}")
@@ -185,16 +207,16 @@ with tab_sim:
                 metric_slots[3].metric(T["loss_fuzzy"], f"{loss_z:.1f}%", help=T["loss_help"])
                 with ltv_slot.container():
                     st.markdown(f"**{T['ch_ltv']} (%)**")
-                    st.line_chart(df[["ltv fixed", "ltv fuzzy"]], color=["#9a9a9a", "#2a6fdb"], height=220)
+                    st.line_chart(df["ltv"], color=["#9a9a9a", "#2a6fdb"], height=220)
                 with util_slot.container():
                     st.markdown(f"**{T['ch_util']} (%)**")
-                    st.line_chart(df[["util fixed", "util fuzzy"]], color=["#9a9a9a", "#2a6fdb"], height=220)
+                    st.line_chart(df["util"], color=["#9a9a9a", "#2a6fdb"], height=220)
                 with sig_slot.container():
                     st.markdown(f"**{T['ch_signals']} (%)**")
-                    st.line_chart(df[["volatility", "rent"]], color=["#eb6834", "#1baf7a"], height=220)
+                    st.line_chart(df["sig"], color=["#eb6834", "#1baf7a"], height=220)
                 with loss_slot.container():
                     st.markdown(f"**{T['ch_loss']}**")
-                    st.line_chart(df[["loss fixed", "loss fuzzy"]], color=["#9a9a9a", "#2a6fdb"], height=220)
-                show_decision(last["decision"], fig_slot, table_slot)
+                    st.line_chart(df["loss"], color=["#9a9a9a", "#2a6fdb"], height=220)
+                show_decision(last["decision"], decision_slot)
                 time.sleep(speed)
         st.success(T["done"])
