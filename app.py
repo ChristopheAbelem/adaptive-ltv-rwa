@@ -11,6 +11,9 @@ Two tabs:
 import time
 
 import matplotlib
+
+matplotlib.use("Agg")   # draw off-screen: Streamlit shows the images
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
@@ -20,7 +23,6 @@ from adaptive_ltv.analysis import active_rules, default_controller
 from adaptive_ltv.plots import STYLE, plot_decision
 from adaptive_ltv.scenarios import market_shock, operational_collapse
 
-matplotlib.use("Agg")
 plt.rcParams.update(STYLE)
 
 TEXT = {
@@ -42,7 +44,7 @@ TEXT = {
         "loss_help": "Losses of the lenders (unpaid debt) as % of the initial deposits",
         "ch_ltv": "Max LTV", "ch_util": "Pool utilization (lent / deposited)", "ch_signals": "Signals (fuzzy run)",
         "ch_loss": "Lenders' loss to date, % of deposits",
-        "inside": "Inside the controller this month",
+        "inside": "Inside the controller: this month's limit, decided with last month's signals",
         "inside_help": ("1-3: each input becomes degrees of membership (0 to 1) in its terms. Rules combine one term "
                         "of each input with AND (the smallest degree). 4: each fired rule cuts its output triangle "
                         "at its strength, the cuts are joined (max), and the centre of gravity of the shape "
@@ -73,7 +75,7 @@ TEXT = {
         "loss_help": "Perda dos credores (dívida não paga) em % dos depósitos iniciais",
         "ch_ltv": "LTV máximo", "ch_util": "Utilização do pool (emprestado / depositado)",
         "ch_signals": "Sinais (simulação fuzzy)", "ch_loss": "Perda acumulada dos credores, % dos depósitos",
-        "inside": "Dentro do controlador neste mês",
+        "inside": "Dentro do controlador: o limite deste mês, decidido com os sinais do mês anterior",
         "inside_help": ("1-3: cada entrada vira graus de pertinência (0 a 1) nos seus termos. As regras combinam um "
                         "termo de cada entrada com E (o menor grau). 4: cada regra ativada corta seu triângulo de "
                         "saída na sua força, os cortes são unidos (máximo) e o centro de gravidade da forma "
@@ -158,6 +160,7 @@ with tab_sim:
             last["decision"] = ctrl.decide(v, u, r)
             return last["decision"].max_ltv
 
+        # env.assumption changes module-level settings: fine for one local user, not for a shared server
         with env.assumption("deleverage_rate", delev), env.assumption("token_discount", discount):
             supply0 = env.initial_state(scenario, env.START_LTV).supply
             fixed_run = env.simulate(scenario, env.fixed_policy())
