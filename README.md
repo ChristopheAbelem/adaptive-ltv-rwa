@@ -1,6 +1,7 @@
 # Adaptive LTV for tokenized real estate
 
 [![tests](https://github.com/ChristopheAbelem/adaptive-ltv-rwa/actions/workflows/tests.yml/badge.svg)](https://github.com/ChristopheAbelem/adaptive-ltv-rwa/actions/workflows/tests.yml)
+[![Live app](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://adaptive-ltv-rwa-hunbgjeqcfmyytwhpgbdzv.streamlit.app)
 
 **Can a lending pool backed by tokenized houses avoid RealT's losses by adjusting its maximum loan-to-value (LTV)
 every month instead of keeping it fixed at 60%?** In a simulation of RealT's 2024-2026 collapse, a fuzzy controller
@@ -9,6 +10,8 @@ deposits, provided borrowers repay part of their loans when the limit falls. Aga
 60% already loses little and the controller is not reliably better.
 
 ![Closed-loop simulation of the operational collapse: fixed 60% (grey) vs fuzzy controller (blue)](docs/app_simulation.png)
+
+**[Run the simulation in your browser](https://adaptive-ltv-rwa-hunbgjeqcfmyytwhpgbdzv.streamlit.app)**: choose a scenario, change the assumptions, and watch the controller decide month by month.
 
 ## The problem
 
@@ -29,7 +32,7 @@ left with debt its collateral could not cover. A fixed limit cannot react to any
 4. **Scenarios**: operational collapse (RealT, Feb 2024 to Jul 2026), market shock (Detroit, 2006-2012) and 300
    Merton jump-diffusion futures; every assumption without public data is varied in a sensitivity analysis.
 
-![The controller's four inference steps for one month](docs/app_inside_controller.png)
+![The controller's four inference steps for inputs between terms: membership degrees, cut output terms, aggregated shape and centroid](docs/app_inside_controller.png)
 
 ## Results
 

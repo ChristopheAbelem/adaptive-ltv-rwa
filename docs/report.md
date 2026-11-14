@@ -1,6 +1,6 @@
 # Adaptive LTV for tokenized real estate: lessons from RealT
 
-*Christophe Abelem — November 2026 — code and full analysis: [github.com/ChristopheAbelem/adaptive-ltv-rwa](https://github.com/ChristopheAbelem/adaptive-ltv-rwa)*
+*Christophe Abelem — November 2026 — code and full analysis: [github.com/ChristopheAbelem/adaptive-ltv-rwa](https://github.com/ChristopheAbelem/adaptive-ltv-rwa) — [live app](https://adaptive-ltv-rwa-hunbgjeqcfmyytwhpgbdzv.streamlit.app)*
 
 ## Summary
 
