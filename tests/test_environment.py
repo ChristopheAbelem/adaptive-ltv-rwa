@@ -92,3 +92,18 @@ def test_step_by_step_matches_full_run():
     res = E.run(sc, E.fixed_policy(0.45), seed=2)
     assert len(rows) == len(sc) - 1 == len(res)
     assert rows[-1]["total_debt"] == pytest.approx(res["total_debt"].iloc[-1])
+
+
+def test_volatility_equals_data_when_nothing_is_sold():
+    """With rent paid and no forced sales, the simulated volatility is exactly the data volatility of section 2.1."""
+    from adaptive_ltv.inputs import volatility_signal
+    from adaptive_ltv.scenarios import operational_collapse
+    try:
+        sc = operational_collapse()
+        data_vol, _ = volatility_signal()
+    except FileNotFoundError:
+        pytest.skip("Case-Shiller cache missing: run 00_data_test.ipynb first")
+    sc.rent_coverage = pd.Series(1.0, index=sc.house_index.index)        # rent paid throughout
+    res = E.run(sc, E.fixed_policy(0.30))                                  # low limit: no liquidation
+    assert res["liquidations"].sum() == 0
+    np.testing.assert_allclose(res["volatility"], data_vol.reindex(res.index), rtol=1e-9)
