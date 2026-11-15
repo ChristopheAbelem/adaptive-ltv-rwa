@@ -13,6 +13,8 @@ deposits, provided borrowers repay part of their loans when the limit falls. Aga
 
 **[Run the simulation in your browser](https://adaptive-ltv-rwa-hunbgjeqcfmyytwhpgbdzv.streamlit.app)**: choose a scenario, change the assumptions, and watch the controller decide month by month.
 
+**[Read the risk note (PDF, 5 pages)](docs/report.pdf)**: the RealT case, the model, results and recommendations for lending markets on real-world assets.
+
 ## The problem
 
 RealT sold fractions of rented Detroit houses as tokens and ran a lending market (RMM) where those tokens served as
@@ -47,7 +49,7 @@ left with debt its collateral could not cover. A fixed limit cannot react to any
 
 **Limitations.** Rent coverage and appraisal dates are stylized from documented events (no public time series);
 borrower repayment, the token discount and price impact have no public data; in the collapse the volatility input
-partly repeats the rent signal. Details in the report notebook, sections 6 and 8, and in the [short report](docs/report.md).
+partly repeats the rent signal. Details in the report notebook, sections 6 and 8, and in the [risk note (PDF)](docs/report.pdf).
 
 ## Run
 
@@ -77,7 +79,7 @@ obtained and checked.
 | `adaptive_ltv/live.py` | Real-time display inside the notebook |
 | `adaptive_ltv/__main__.py` | Command line: prints each month as it runs |
 | `app.py` | Streamlit app: closed loop in real time and the controller's internal steps |
-| `scripts/make_report_figures.py` | Regenerates the figures of `docs/report.md` |
+| `scripts/make_report.py` | Builds the risk note `docs/report.pdf` (every number computed from the package) |
 | `tests/` | `pytest` suite: de-smoothing, coverage, rules, monotonicity, environment accounting, Merton closed forms |
 | `00_data_test.ipynb` | Data feasibility test: every input downloaded and checked, pass/fail per source |
 | `01_adaptive_ltv.ipynb` | Report: modelling, rules, surfaces, environment, closed-loop results, sensitivity |

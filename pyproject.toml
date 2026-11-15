@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = ["numpy", "pandas", "scipy", "networkx", "scikit-fuzzy", "matplotlib"]
 
 [project.optional-dependencies]
-dev = ["pytest", "jupyter", "requests", "web3", "streamlit"]
+dev = ["pytest", "jupyter", "requests", "web3", "streamlit", "reportlab"]
 app = ["streamlit"]
 
 [tool.setuptools]
