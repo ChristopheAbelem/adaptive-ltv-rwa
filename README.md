@@ -6,8 +6,9 @@
 **Can a lending pool backed by tokenized houses avoid RealT's losses by adjusting its maximum loan-to-value (LTV)
 every month instead of keeping it fixed at 60%?** In a simulation of RealT's 2024-2026 collapse, a fuzzy controller
 that reads price volatility, pool liquidity and rent payments cuts lenders' losses from about 46% to about 6% of
-deposits, provided borrowers repay part of their loans when the limit falls. Against a pure house-price crash, a fixed
-60% already loses little and the controller is not reliably better.
+deposits, provided borrowers repay part of their loans when the limit falls. Against a pure house-price crash a fixed
+60% already loses little (2.8% against 0% with the controller in the base case), so the controller's main value is
+in operational risk: income and liquidity.
 
 ![Closed-loop simulation of the operational collapse: fixed 60% (grey) vs fuzzy controller (blue)](docs/app_simulation.png)
 
@@ -19,7 +20,7 @@ deposits, provided borrowers repay part of their loans when the limit falls. Aga
 
 RealT sold fractions of rented Detroit houses as tokens and ran a lending market (RMM) where those tokens served as
 collateral, with a fixed max LTV of 60% and liquidation at 70%. In 2025-2026 rent stopped reaching token holders,
-the tokens lost most of their value while house prices and appraisals stayed high, lenders ran, and the pool was
+the tokens traded at deep discounts while house prices and appraisals stayed high, lenders ran, and the pool was
 left with debt its collateral could not cover. A fixed limit cannot react to any of that.
 
 ## How it works
@@ -61,7 +62,7 @@ streamlit run app.py        # real-time closed loop and the controller's interna
 python -m adaptive_ltv collapse   # same comparison in the terminal
 ```
 
-The report is `01_adaptive_ltv.ipynb` (run top to bottom); `00_data_test.ipynb` documents how every input was
+The full analysis is `01_adaptive_ltv.ipynb` (run top to bottom); `00_data_test.ipynb` documents how every input was
 obtained and checked.
 
 ## Structure
